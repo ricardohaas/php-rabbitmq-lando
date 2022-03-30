@@ -1,0 +1,40 @@
+name: php-rabbitmq-lando
+recipe: lamp
+config:
+  webroot: .
+services:
+  rabbitmq:
+    type: compose
+    services:
+      image: "rabbitmq:3-management-alpine"
+      hostname: "rabbit"
+      # Start the server for RabbitMQ
+      command: rabbitmq-server
+      # Expose RabbitMQ Ports
+      ports:
+        - '15672:15672'
+        - '5672:5672'
+      # Link RabbitMQ Configs
+      volumes:
+        - rabbitmq-isolated.conf:/etc/rabbitmq/rabbitmq.config
+      labels:
+        NAME: "rabbitmq"
+tooling:
+  rabbit:
+    service: rabbitmq
+    # User must be root to prevent erlang cookie error
+    user: root
+    cmd: rabbitmqctl
+  # Setup command "lando rabbit-ip" to get the ip address
+  rabbit-ip:
+    service: rabbitmq
+    cmd:
+      - rabbitmq: echo -e "\n\e[36mRABBITMQ IP ADDRESS:\e[32m"
+      - rabbitmq: hostname -i | cut -d' ' -f1
+run_as_root:
+  - sh -c "adduser -D -H -Gwww-data www-data"
+events:
+  # Shows IP address on 'lando start'
+  post-start:
+    - rabbitmq: echo -e "\n\e[36mRABBITMQ IP ADDRESS:\e[32m"
+    - rabbitmq: hostname -i | cut -d' ' -f1
